@@ -1,0 +1,11 @@
+---
+wildfly_version: "38.0.0.Final"
+wildfly_archive: "wildfly-{{ wildfly_version }}.zip"
+wildfly_url: "https://github.com/wildfly/wildfly/releases/download/{{ wildfly_version }}/{{ wildfly_archive }}"
+wildfly_install_dir: "/opt"
+wildfly_home: "/opt/wildfly"
+wildfly_service: "/etc/systemd/system/wildfly.service"
+wildfly_group: "wildfly"
+wildfly_user: "wildfly"
+wildfly_http_port: 8080
+wildfly_https_port: 8443

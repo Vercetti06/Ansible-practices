@@ -1,0 +1,86 @@
+---
+
+    - name: Install required packages (Java 17, unzip, firewalld)
+      ansible.builtin.dnf:
+        name:
+          - java-17-amazon-corretto-devel
+          - unzip
+          - firewalld
+        state: present
+
+    - name: Enable and start firewalld
+      ansible.builtin.systemd:
+        name: firewalld
+        state: started
+        enabled: yes
+
+    - name: Create group for WildFly
+      ansible.builtin.group:
+        name: "{{ wildfly_group }}"
+
+    - name: Create user for WildFly
+      ansible.builtin.user:
+        name: "{{ wildfly_user }}"
+        group: "{{ wildfly_group }}"
+        home: "{{ wildfly_home }}"
+        shell: /bin/bash
+        create_home: no
+
+    - name: Download WildFly archive
+      ansible.builtin.get_url:
+        url: "{{ wildfly_url }}"
+        dest: "{{ wildfly_install_dir }}/{{ wildfly_archive }}"
+        mode: '0644'
+
+    - name: Unarchive WildFly
+      ansible.builtin.unarchive:
+        src: "{{ wildfly_install_dir }}/{{ wildfly_archive }}"
+        dest: "{{ wildfly_install_dir }}"
+        remote_src: yes
+        creates: "{{ wildfly_install_dir }}/wildfly-{{ wildfly_version }}"
+
+    - name: Move WildFly directory for consistency
+      ansible.builtin.command: mv "{{ wildfly_install_dir }}/wildfly-{{ wildfly_version }}" "{{ wildfly_home }}"
+      args:
+        creates: "{{ wildfly_home }}"
+
+    - name: Set ownership for WildFly directory
+      ansible.builtin.file:
+        path: "{{ wildfly_home }}"
+        owner: "{{ wildfly_user }}"
+        group: "{{ wildfly_group }}"
+        recurse: yes
+
+    - name: Copy your standalone.xml configuration (optional, provide your template)
+      ansible.builtin.template:
+        src: standalone.xml.j2
+        dest: "{{ wildfly_home }}/standalone/configuration/standalone.xml"
+      notify: restart wildfly
+
+    - name: Copy WildFly systemd unit file
+      ansible.builtin.template:
+        src: wildfly.service.j2
+        dest: "{{ wildfly_service }}"
+        mode: '0644'
+      notify:
+        - daemon-reload
+        - restart wildfly
+
+    - name: Open WildFly HTTP and HTTPS ports in firewalld
+      firewalld:
+        port: "{{ item }}/tcp"
+        permanent: true
+        state: enabled
+        immediate: yes
+      loop:
+        - "{{ wildfly_http_port }}"
+        - "{{ wildfly_https_port }}"
+
+    - name: Reload firewalld for changes
+      ansible.builtin.command: firewall-cmd --reload
+
+    - name: Enable and start WildFly service
+      ansible.builtin.systemd:
+        name: wildfly
+        enabled: yes
+        state: started

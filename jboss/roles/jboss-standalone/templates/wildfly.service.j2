@@ -1,0 +1,24 @@
+[Unit]
+Description=WildFly Application Server
+Documentation=https://docs.wildfly.org/
+After=network.target
+
+[Service]
+Type=simple
+# Update if you use a custom configuration file (env or sysconfig)
+EnvironmentFile=-/etc/sysconfig/wildfly
+User=wildfly
+Group=wildfly
+WorkingDirectory=/opt/wildfly
+ExecStart=/opt/wildfly/bin/standalone.sh -b=0.0.0.0 -c=standalone.xml
+ExecStop=/opt/wildfly/bin/jboss-cli.sh --connect command=:shutdown
+
+# Allow environment config for JAVA_HOME, etc.
+Environment=JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto
+SuccessExitStatus=130 143
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+

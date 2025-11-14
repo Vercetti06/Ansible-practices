@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server xmlns="urn:jboss:domain:11.0">
+    <extensions>
+        <extension module="org.jboss.as.clustering.infinispan"/>
+        <extension module="org.jboss.as.connector"/>
+        <extension module="org.jboss.as.deployment-scanner"/>
+        <extension module="org.jboss.as.ejb3"/>
+        <extension module="org.jboss.as.jaxrs"/>
+        <extension module="org.jboss.as.naming"/>
+        <extension module="org.jboss.as.connector.deployers.local"/>
+        <extension module="org.jboss.as.transactions"/>
+        <extension module="org.jboss.as.webservices"/>
+        <extension module="org.wildfly.extension.microprofile.config.smallrye"/>
+    </extensions>
+
+    <management>
+        <security-realms>
+            <security-realm name="ManagementRealm">
+                <authentication>
+                    <local default-user="$local"/>
+                    <properties path="mgmt-users.properties" relative-to="jboss.server.config.dir"/>
+                </authentication>
+            </security-realm>
+        </security-realms>
+        <management-interfaces>
+            <http-interface security-realm="ManagementRealm">
+                <http-upgrade enabled="true" sasl-authentication-factory="management-sasl-authentication"/>
+                <socket-binding http="management-http"/>
+            </http-interface>
+        </management-interfaces>
+    </management>
+
+    <profile>
+        <subsystem xmlns="urn:jboss:domain:webservices:3.0"/>
+        <subsystem xmlns="urn:jboss:domain:transactions:7.0"/>
+        <subsystem xmlns="urn:jboss:domain:messaging-activemq:11.0"/>
+        <subsystem xmlns="urn:jboss:domain:datasources:7.0"/>
+        <subsystem xmlns="urn:jboss:domain:naming:4.0"/>
+        <subsystem xmlns="urn:jboss:domain:deployment-scanner:3.0"/>
+        <subsystem xmlns="urn:jboss:domain:ejb3:7.0"/>
+        <subsystem xmlns="urn:jboss:domain:jpa:5.0"/>
+    </profile>
+
+    <interfaces>
+        <interface name="management">
+            <inet-address value="${jboss.bind.address.management:0.0.0.0}"/>
+        </interface>
+        <interface name="public">
+            <inet-address value="${jboss.bind.address:0.0.0.0}"/>
+        </interface>
+    </interfaces>
+
+    <socket-binding-group name="standard-sockets" default-interface="public">
+        <socket-binding name="http" port="${jboss.http.port:8080}"/>
+        <socket-binding name="https" port="${jboss.https.port:8443}"/>
+        <socket-binding name="management-http" port="${jboss.management.http.port:9990}"/>
+        <socket-binding name="management-https" port="${jboss.management.https.port:9993}"/>
+    </socket-binding-group>
+
+    <deployments/>
+</server>
+
